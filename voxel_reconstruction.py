@@ -71,7 +71,7 @@ dataloader_train = DataLoader(
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 model = Voxels(scale=3.0, device=device)
-epochs = 5
+epochs = 15
 lr = 1e-3
 gamma = 0.5
 
