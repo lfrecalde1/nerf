@@ -57,9 +57,9 @@ def rendering(
     # T = compute_accumulated_transmittance(1 - alpha)
     weights = compute_accumulated_transmittance(1 - alpha) * alpha  # [nb_rays, nb_bins]
     if white_background:
-        c = (weights.unsqueeze(-1) * colors).sum(1)  # [nb_rays, 3]
+        c_aux = (weights.unsqueeze(-1) * colors).sum(1)  # [nb_rays, 3]
         weight_sum = weights.sum(-1)
-        c = c + 1 - weight_sum.unsqueeze(-1)
+        c = c_aux + 1 - weight_sum.unsqueeze(-1)
     else:
         c = (weights.unsqueeze(-1) * colors).sum(1)  # [nb_rays, 3]
     return c

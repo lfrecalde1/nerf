@@ -43,11 +43,11 @@ def training(
                 device=device,
             )
 
-            loss = F.l1_loss(target, prediction)
+            loss = ((prediction - target) ** 2).mean()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            training_loss.append(loss.item())
+            # training_loss.append(loss.item())
         schedules.step()
 
     return np.array(training_loss)
@@ -55,6 +55,25 @@ def training(
 
 batch_size = 1024
 o, d, target_px_values, H, W = get_rays("fox", mode="train")
+dataloader_warmup = DataLoader(
+    torch.cat(
+        (
+            torch.from_numpy(o)
+            .reshape(90, 400, 400, 3)[:, 100:300, 100:300, :]
+            .reshape(-1, 3),
+            torch.from_numpy(d)
+            .reshape(90, 400, 400, 3)[:, 100:300, 100:300, :]
+            .reshape(-1, 3),
+            torch.from_numpy(target_px_values)
+            .reshape(90, 400, 400, 3)[:, 100:300, 100:300, :]
+            .reshape(-1, 3),
+        ),
+        dim=1,
+    ),
+    batch_size=batch_size,
+    shuffle=True,
+)
+
 dataloader_train = DataLoader(
     torch.cat(
         (
@@ -75,13 +94,27 @@ epochs = 15
 lr = 1e-3
 gamma = 0.5
 
-optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 schedule = torch.optim.lr_scheduler.MultiStepLR(
     optimizer, milestones=[5, 10], gamma=gamma
 )
 tn = 8
 tf = 12
 bins = 100
+
+loss_init = training(
+    model,
+    optimizer,
+    schedule,
+    tn,
+    tf,
+    bins,
+    1,
+    dataloader_warmup,
+    H,
+    W,
+    device=device,
+)
 
 loss = training(
     model,
@@ -110,4 +143,36 @@ img = img.cpu().data.numpy()
 img = img.reshape(H, W, 3)
 plt.figure(dpi=200)
 plt.imshow(img)
-plt.savefig("optimization_fox.png")
+plt.savefig("optimization_fox_1.png")
+
+img = rendering(
+    model,
+    torch.from_numpy(o[1]).to(device),
+    torch.from_numpy(d[1]).to(device),
+    tn,
+    tf,
+    nb_bins=bins,
+    device=device,
+)
+
+img = img.cpu().data.numpy()
+img = img.reshape(H, W, 3)
+plt.figure(dpi=200)
+plt.imshow(img)
+plt.savefig("optimization_fox_2.png")
+
+img = rendering(
+    model,
+    torch.from_numpy(o[2]).to(device),
+    torch.from_numpy(d[2]).to(device),
+    tn,
+    tf,
+    nb_bins=bins,
+    device=device,
+)
+
+img = img.cpu().data.numpy()
+img = img.reshape(H, W, 3)
+plt.figure(dpi=200)
+plt.imshow(img)
+plt.savefig("optimization_fox_3.png")
