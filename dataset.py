@@ -11,12 +11,9 @@ def get_rays(datapath, mode="train"):
     pose_file_names = [
         f for f in os.listdir(datapath + f"/{mode}/pose") if f.endswith(".txt")
     ]
-    print(pose_file_names)
     intrisics_file_names = [
         f for f in os.listdir(datapath + f"/{mode}/intrinsics") if f.endswith(".txt")
     ]
-    print("-------")
-    print(intrisics_file_names)
     img_file_names = [f for f in os.listdir(datapath + "/imgs") if mode in f]
 
     assert len(pose_file_names) == len(intrisics_file_names)
@@ -40,7 +37,6 @@ def get_rays(datapath, mode="train"):
 
         # Read images
         img = imageio.imread(datapath + "/imgs/" + name.replace("txt", "png")) / 255.0
-        print(datapath + "/imgs/" + name.replace("txt", "png"))
         images.append(img[None, ...])
     images = np.concatenate(images)
 
